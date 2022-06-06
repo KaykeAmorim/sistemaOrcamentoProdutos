@@ -5,9 +5,6 @@ const express = require('express')
 const port = 8080
 
 const Pedidos = require('./database/Pedidos')
-const req = require('express/lib/request')
-const { where } = require('sequelize')
-const { render } = require('express/lib/response')
 
 const app = express()
 
