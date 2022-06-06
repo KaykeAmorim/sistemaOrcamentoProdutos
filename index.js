@@ -98,3 +98,15 @@ app.get('/cancelarPedido/:ID',function(req,res){
         res.redirect(`/pedidos`)
     })
 })
+
+app.get('/pedidosFinalizados', function(req,res){
+    Pedidos.findAll({
+        raw:true,
+        attributes: ['id','cliente'],
+        where:{
+            status:true
+        }
+    }).then((result)=>{
+        res.render('pedidos',{pedidos:result})
+    })
+})
