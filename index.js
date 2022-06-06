@@ -1,125 +1,100 @@
-const btnAddSessao = document.getElementById('btnAddSessao')
-const btnImprimir = document.getElementById('btnImprimir')
-const sessoes = document.getElementById('sessoes')
-const totalHTML = document.getElementById('total')
-let i = 0;
-btnAddSessao.addEventListener('click', addSessao);
-btnImprimir.addEventListener('click', imprimir)
+const Sequelize = require('sequelize')
+const bodyParser = require('body-parser')
+const connection = require('./database/database')
+const express = require('express')
+const port = 8080
 
-function addSessao(){
-    var sessao = document.createElement('div')
-    
-    var titulo = document.createElement('h3')
-    titulo.setAttribute('contentEditable',"true")
-    titulo.setAttribute('class','mt-5')
-    titulo.innerHTML = "Título"
-    sessao.appendChild(titulo)
+const Pedidos = require('./database/Pedidos')
+const req = require('express/lib/request')
+const { where } = require('sequelize')
+const { render } = require('express/lib/response')
 
-    var cabecalho = getCabecalho()
-    sessao.appendChild(cabecalho)
-    var hr = document.createElement('hr')
-    sessao.appendChild(hr)
+const app = express()
 
-    var itens = document.createElement('div')
-    itens.setAttribute('id','itens')
-    sessao.appendChild(itens)
+connection.authenticate()
+    .then(()=>{
+        console.log('Conexão estabelecida com sucesso !')
+    })
+    .catch((err)=>{
+        console.log(err)
+    })
 
-    var btnAddItem = document.createElement('button')
-    btnAddItem.setAttribute('class','btn btn-success d-print-none')
-    btnAddItem.innerHTML = "Adicionar item"
-    btnAddItem.addEventListener('click', addItem)
-    sessao.appendChild(btnAddItem)
+app.set('view engine', 'ejs')
+app.use(express.static('sistemaOrcamentoProdutos'))
+app.use('/js',express.static('js'))
+app.use('/imagens',express.static('imagens'))
+app.use(bodyParser.urlencoded({extended: false}))
+app.use(bodyParser.json())
 
-    sessoes.appendChild(sessao)
-}
+app.listen(port, () => console.log("Servidor online!"))
 
-function getCabecalho(){
-    var element = document.createElement('div')
-    element.setAttribute('class','row mt-3')
+app.get('/novoOrcamento',function(req,res){
+    res.render('orcamento')
+})
 
-    var quantidade = document.createElement('h5')
-    quantidade.setAttribute('class','col-sm-4')
-    quantidade.innerHTML = "Qtd"
+app.post('/enviarOrcamento',function(req,res){
+    const document = req.body.orcamento
+    const cliente = req.body.cliente
+    console.log(cliente)
+    Pedidos.create({
+        cliente: cliente,
+        orcamento: document,
+        status: false
+    }).then(()=>{
+        res.redirect('/novoOrcamento')
+    })
+})
 
-    var item = document.createElement('h5')
-    item.setAttribute('class','col-sm-4')
-    item.innerHTML = "Item"
-
-    var preco = document.createElement('h5')
-    preco.setAttribute('class','col-sm-4')
-    preco.innerHTML = "Preço"
-
-    var hr = document.createElement('hr')
-
-    element.appendChild(quantidade)
-    element.appendChild(item)
-    element.appendChild(preco)
-    element.appendChild(hr)
-
-    return element
-
-}
-
-function addItem(){
-    var sessao = this.parentElement
-    var itens = sessao.children[3]
-    var item = getItem();
-    item.children[0].addEventListener('blur',calcularTotal)
-    item.children[2].addEventListener('blur',calcularTotal)
-    itens.appendChild(item)
-}
-
-function getItem(){
-    var element = document.createElement('div')
-    element.setAttribute('class','row mt-3')
-
-    var quantidade = document.createElement('h5')
-    quantidade.setAttribute('class','col-sm-4')
-    quantidade.setAttribute('contentEditable','true')
-    quantidade.innerHTML = "0"
-
-    var item = document.createElement('h5')
-    item.setAttribute('class','col-sm-4')
-    item.setAttribute('contentEditable','true')
-    item.innerHTML = "Item"
-
-    var preco = document.createElement('h5')
-    preco.setAttribute('class','col-sm-4')
-    preco.setAttribute('contentEditable','true')
-    preco.innerHTML = "R$ 00,00"
-
-    element.appendChild(quantidade)
-    element.appendChild(item)
-    element.appendChild(preco)
-
-    return element
-
-}
-
-function calcularTotal(){
-    let total = 0;
-    for(var i = 0; i <sessoes.childElementCount; i++){
-        total += calcularTotalSessao(sessoes.children[i])
-    }
-    totalHTML.innerHTML = `R$ ${(total.toFixed(2)).toString().replace('.',',')}`
-}
-
-function calcularTotalSessao(sessao){
-    var valor = new String()
-    var qtd = new String()
-    var total = 0;
-    for(var i = 0; i < sessao.children[3].childElementCount; i++ ){
-        valor = (sessao.children[3].children[i].children[2].innerHTML)
-        if(valor.indexOf('R$') != -1){
-            valor = valor.slice(3)
+app.get('/pedidos',function(req,res){
+    Pedidos.findAll({
+        raw:true,
+        attributes: ['id','cliente'],
+        where:{
+            status:false
         }
-        valor = Number(valor.replace(',','.'))
-        qtd = Number(sessao.children[3].children[i].children[0].innerText)
-        total+= qtd * valor
-    }
-    return total;
-}
+    }).then((result)=>{
+        res.render('pedidos',{pedidos:result})
+    })
+})
 
-function imprimir(){
-    window.print()
-}
+app.get('/pedido/:ID',function(req,res){
+    Pedidos.findAll({
+        raw:true,
+        attributes:['id','orcamento','cliente'],
+        where:{
+            id: req.params.ID
+        }
+    }).then((result)=>{ 
+        res.render('pedido',{pedido:result[0]})
+    })
+})
+
+app.post('/alterarOrcamento/:ID', function(req,res){
+    const document = req.body.orcamento
+    const ID = req.params.ID
+    Pedidos.update(
+        {orcamento: document},
+        {where:{
+            id: ID
+        }}
+    ).then(()=>{
+        res.redirect('/pedidos')
+    })
+})
+
+app.get('/finalizarPedido/:ID',function(req,res) {
+    const ID = req.params.ID
+
+    Pedidos.update({status:true},{where:{id:ID}}).then(()=>{
+        res.redirect(`/pedidos`)
+    })
+})
+
+app.get('/cancelarPedido/:ID',function(req,res){
+    const ID = req.params.ID
+    Pedidos.destroy({
+        where:{id:ID}
+    }).then(()=>{
+        res.redirect(`/pedidos`)
+    })
+})
