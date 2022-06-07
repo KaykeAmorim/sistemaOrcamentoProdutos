@@ -6,6 +6,12 @@ const sessoes = document.getElementById('sessoes')
 const totalHTML = document.getElementById('total')
 const nomeCliente = document.getElementById('nomeCliente')
 const formE = document.forms.formE
+const descricaoPedido = document.getElementById('descricaoPedido')
+const descricao = document.getElementById('descricao')
+
+descricaoPedido.addEventListener('blur', function(){
+    descricao.value = this.value
+})
 
 let INDEX = 0;
 

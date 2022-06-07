@@ -32,10 +32,12 @@ app.get('/novoOrcamento',function(req,res){
 app.post('/enviarOrcamento',function(req,res){
     const document = req.body.orcamento
     const cliente = req.body.cliente
+    const descricao = req.body.descricao
     console.log(cliente)
     Pedidos.create({
         cliente: cliente,
         orcamento: document,
+        descricao: descricao,
         status: false
     }).then(()=>{
         res.redirect('/novoOrcamento')
@@ -57,7 +59,7 @@ app.get('/pedidos',function(req,res){
 app.get('/pedido/:ID',function(req,res){
     Pedidos.findAll({
         raw:true,
-        attributes:['id','orcamento','cliente'],
+        attributes:['id','orcamento','descricao','cliente'],
         where:{
             id: req.params.ID
         }

@@ -16,6 +16,9 @@ const Pedidos = connection.define('Pedidos',{
         type: Sequelize.TEXT,
         allowNull: false
     },
+    descricao:{
+        type: Sequelize.TEXT,
+    },
     status:{
         type: Sequelize.BOOLEAN,
         allowNull: false

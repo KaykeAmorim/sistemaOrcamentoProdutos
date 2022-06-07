@@ -30,6 +30,8 @@
                 <div id="btnAddSessao" class="col-sm-6"><button class="btn btn-info w-100">Adicionar sessão</button></div>
                 <div id="btnImprimir" class="col-sm-6"><button class="btn btn-danger w-100">Enviar</button></div>
             </div>
+            <textarea id="descricaoPedido" class="w-100 mt-5" ></textarea>
+        </section>
     </div><hr/>
 
     <section class="d-print-none mt-5 container">
@@ -38,6 +40,7 @@
             <fieldset>
                 <input id="cliente" class="form-control" name='cliente' value="<%=pedido.cliente%>"></input>
                 <textarea name="orcamento" class='form-control mt-3' id="orcamento" ><%=pedido.orcamento%></textarea>
+                <textarea name="descricao" class="form-control" id="descricao"><%=pedido.descricao%></textarea>
             </fieldset> 
         </form>
     </section>
